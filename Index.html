@@ -29,10 +29,18 @@
       <div id="adminZone" hidden>
         <button id="draw">Lancer le tirage 🎲</button>
         <button id="reset" class="ghost">Tout supprimer</button>
+        <button id="clearHist" class="ghost">Vider l'historique</button>
       </div>
     </div>
   </div>
-  <div id="winner" class="winner" hidden></div>
+  <div id="winner" class="winner" hidden>
+    <div id="winnerText"></div>
+    <button id="copy" class="ghost">📋 Copier le Snap du gagnant</button>
+  </div>
+  <div class="card" id="historyCard" hidden>
+    <h2>🏆 Anciens gagnants</h2>
+    <ul id="history"></ul>
+  </div>
 </main>
 <script src="script.js"></script>
 </body>
