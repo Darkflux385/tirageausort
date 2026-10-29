@@ -1,11 +1,44 @@
 const ADMIN_CODE = "1234"; // ← change ce code
 const KEY = "tirage_participants";
 const JOINED = "tirage_deja_inscrit";
+const HKEY = "tirage_gagnants";
 const $ = id => document.getElementById(id);
 let players = [];
+let history = [];
 try { players = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) {}
+try { history = JSON.parse(localStorage.getItem(HKEY)) || []; } catch (e) {}
 
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(players)); } catch (e) {} };
+const saveHist = () => { try { localStorage.setItem(HKEY, JSON.stringify(history)); } catch (e) {} };
+
+function renderHistory() {
+  $("historyCard").hidden = !history.length;
+  $("history").innerHTML = "";
+  history.slice().reverse().forEach(w => {
+    const li = document.createElement("li");
+    li.textContent = `${w.date} — ${w.pseudo} (Snap : ${w.snap})`;
+    $("history").appendChild(li);
+  });
+}
+
+let lastSnap = "";
+function showWinner(text, snap) {
+  lastSnap = snap || "";
+  $("winner").hidden = false;
+  $("winnerText").textContent = text;
+  $("copy").hidden = !snap;
+  $("copy").textContent = "📋 Copier le Snap du gagnant";
+}
+
+async function copyText(txt) {
+  try { await navigator.clipboard.writeText(txt); return true; } catch (e) {}
+  try {
+    const t = document.createElement("textarea");
+    t.value = txt; document.body.appendChild(t); t.select();
+    const ok = document.execCommand("copy");
+    t.remove(); return ok;
+  } catch (e) { return false; }
+}
 
 function render(hl = -1) {
   $("count").textContent = players.length;
@@ -47,7 +80,7 @@ $("login").onclick = () => {
 };
 
 $("draw").onclick = () => {
-  if (!players.length) { $("winner").hidden = false; $("winner").textContent = "Aucun participant !"; return; }
+  if (!players.length) { showWinner("Aucun participant !", ""); return; }
   $("winner").hidden = true;
   let n = 0;
   const t = setInterval(() => {
@@ -56,11 +89,20 @@ $("draw").onclick = () => {
       clearInterval(t);
       const i = Math.floor(Math.random() * players.length);
       render(i);
-      $("winner").hidden = false;
-      $("winner").textContent = `🏆 ${players[i].pseudo} — Snap : ${players[i].snap}`;
+      const w = players[i];
+      showWinner(`🏆 ${w.pseudo} — Snap : ${w.snap}`, w.snap);
+      history.push({ pseudo: w.pseudo, snap: w.snap, date: new Date().toLocaleDateString("fr-FR") });
+      saveHist(); renderHistory();
     }
   }, 100);
 };
+
+$("copy").onclick = async () => {
+  const ok = await copyText(lastSnap);
+  $("copy").textContent = ok ? "✅ Copié !" : "❌ Copie impossible : " + lastSnap;
+};
+
+$("clearHist").onclick = () => { history = []; saveHist(); renderHistory(); };
 
 let armed = false;
 $("reset").onclick = () => {
@@ -77,3 +119,4 @@ $("reset").onclick = () => {
 };
 
 render();
+renderHistory();
